@@ -100,6 +100,11 @@ defmodule Justify do
 
   * `:message` - error message, defaults to "has invalid format"
   """
+  @spec validate_format(map, Regex.t(), Keyword.t()) :: Justify.Dataset.t()
+  defdelegate validate_format(dataset, format),
+    to: Justify.Validators.Format,
+    as: :call
+
   @spec validate_format(map, atom, Regex.t(), Keyword.t()) :: Justify.Dataset.t()
   defdelegate validate_format(dataset, field, format, opts \\ []),
     to: Justify.Validators.Format,
@@ -143,6 +148,11 @@ defmodule Justify do
       * “should have at least %{count} item(s)”
       * “should have at most %{count} item(s)”
   """
+  @spec validate_length(map, Keyword.t()) :: Justify.Dataset.t()
+  defdelegate validate_length(dataset, opts),
+    to: Justify.Validators.Length,
+    as: :call
+
   @spec validate_length(map, atom, Keyword.t()) :: Justify.Dataset.t()
   defdelegate validate_length(dataset, field, opts),
     to: Justify.Validators.Length,
@@ -161,6 +171,11 @@ defmodule Justify do
     to: Justify.Validators.Required,
     as: :call
 
+  @spec validate_map(map, atom, Keyword.t()) :: Justify.Dataset.t()
+  defdelegate validate_map(dataset, fields, opts \\ []),
+    to: Justify.Validators.Map,
+    as: :call
+
   @doc """
   Adds an error to the dataset.
 
@@ -169,7 +184,7 @@ defmodule Justify do
   """
   @spec add_error(Justify.Dataset.t(), atom, String.t(), Keyword.t()) :: Justify.Dataset.t()
   def add_error(dataset, field, message, keys \\ []) do
-    put_error(dataset, field, { message, keys })
+    put_error(dataset, field, {message, keys})
   end
 
   @doc false
@@ -177,8 +192,8 @@ defmodule Justify do
     errors =
       dataset
       |> Map.get(:errors)
-      |> Enum.concat([{ field, error }])
+      |> Enum.concat([{field, error}])
 
-    %{ dataset | errors: errors, valid?: false }
+    %{dataset | errors: errors, valid?: false}
   end
 end

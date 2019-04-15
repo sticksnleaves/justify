@@ -213,6 +213,24 @@ defmodule JustifyTest do
                valid?: true
              } = Justify.validate_embed(data, field, fun)
     end
+
+    test "can validate embedded lists" do
+      data = %{key: ["123", "1"]}
+
+      assert %Justify.Dataset{
+               errors: [
+                 key: [
+                   [
+                     {"1", _}
+                   ]
+                 ]
+               ],
+               valid?: false
+             } =
+               Justify.validate_embed(data, :key, fn d ->
+                 Justify.validate_length(d, min: 2)
+               end)
+    end
   end
 
   describe "validate_exclusion/4" do
@@ -310,6 +328,16 @@ defmodule JustifyTest do
                errors: [{ ^field, { ^message, validation: :format } }],
                valid?: false
              } = Justify.validate_format(data, field, ~r/\d/, message: message)
+    end
+
+    test "can validate a simple value" do
+      data = "message"
+
+      assert %Justify.Dataset{
+               data: ^data,
+               errors: [{^data, {_, validation: :format}}],
+               valid?: false
+             } = Justify.validate_format(data, ~r/\d/)
     end
   end
 
@@ -736,9 +764,36 @@ defmodule JustifyTest do
 
       assert %Justify.Dataset{
                data: ^data,
-               errors: [{ ^field, { ^message, validation: :required } }],
+               errors: [{^field, {^message, validation: :required}}],
                valid?: false
              } = Justify.validate_required(data, field, message: message)
+    end
+  end
+
+  describe "validate_map/3" do
+    test "validates every key in a map" do
+      field = :name
+
+      data = %{
+        nested: %{
+          one: %{name: "Name"},
+          two: %{name: "N"}
+        }
+      }
+
+      assert %Justify.Dataset{
+               errors: [
+                 {:nested,
+                  [
+                    two: [{^field, _}]
+                  ]}
+               ],
+               valid?: false
+             } =
+               Justify.validate_map(data, :nested, fn v ->
+                 v
+                 |> Justify.validate_length(field, min: 2)
+               end)
     end
   end
 end
